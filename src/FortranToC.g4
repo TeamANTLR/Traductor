@@ -35,7 +35,7 @@ defvar : tipo '::' varlist ';' defvar | ;
 ctelist : {Constante cte = new Constante();} ',' {cte.setName(getCurrentToken().getText());} IDENT '=' {cte.setValue(getCurrentToken().getText());} simpvalue {constantes.add(cte);} ctelist | ;
 //anadida parte opcional
 simpvalue : NUM_INT_CONST | NUM_REAL_CONST | STRING_CONST | NUM_INT_CONST_B | NUM_INT_CONST_O | NUM_INT_CONST_H;
-tipo : 'INTEGER' | 'REAL' | 'CHARACTER' charlength ;
+tipo : 'INTEGER' | 'REAL' | 'CHARACTER' charlength ; //falta añadir lo que en el enunciado viene como typevar
 charlength : '(' NUM_INT_CONST ')' | ;
 //Original: varlist: IDENT init | IDENT init ',' varlist;
 //Cambiado para ser LL(1), ya que dos producciones de una misma regla no pueden tener el mismo director
@@ -64,7 +64,7 @@ dec_f_paramlist :  tipo ',' 'INTENT' '(' 'IN' ')' IDENT ';' dec_f_paramlist | ;
 
 //anadida parte opcional
 //Cambiado para ser LL(1), ya que dos producciones de una misma regla no pueden tener el mismo director
-sent : IDENT '=' exp ';' | proc_call ';'
+sent : IDENT '=' exp ';'| proc_call ';'
     | 'IF' '(' expcond ')' sent2
     | 'DO' sent4
     | 'SELECT' 'CASE' '(' exp ')' casos 'END' 'SELECT' ;
