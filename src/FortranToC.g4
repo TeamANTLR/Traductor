@@ -2,13 +2,16 @@ grammar FortranToC;
 
 @parser::members {
 	ArrayList<Constante> constantes = new ArrayList<>();
+	ArrayList<Cabecera> cabeceras = new ArrayList<>();
+	ArrayList<Variable> subroutineVars = new ArrayList<>();
 }
 
 /////////////////////////////////////////////
 /////////////////////////////////Primera Zona
 /////////////////////////////////////////////
 
-prg : prgmal | 'PROGRAM' IDENT ';' dcllist {constantes.forEach(cte -> {System.out.println(cte.constante);});} cabecera sent sentlist 'END' 'PROGRAM' IDENT subproglist;
+prg : prgmal | 'PROGRAM' IDENT ';' dcllist {constantes.forEach(cte -> {System.out.println(cte.constante);});}
+cabecera {cabeceras.forEach(cab -> {cab.printCabecera();});} sent sentlist 'END' 'PROGRAM' IDENT subproglist;
 //Un ejemplo de error controlado desde la especificación léxica
 prgmal : 'program' IDENT ';' dcllist cabecera sent sentlist 'END' 'program' IDENT subproglist{System.err.println("PROGRAM debe ir con mayusculas");};
 //Original: dcllist : | dcllist dcl;
@@ -35,7 +38,10 @@ defvar : tipo '::' varlist ';' defvar | ;
 ctelist : {Constante cte = new Constante();} ',' {cte.setName(getCurrentToken().getText());} IDENT '=' {cte.setValue(getCurrentToken().getText());} simpvalue {constantes.add(cte);} ctelist | ;
 //anadida parte opcional
 simpvalue : NUM_INT_CONST | NUM_REAL_CONST | STRING_CONST | NUM_INT_CONST_B | NUM_INT_CONST_O | NUM_INT_CONST_H;
-tipo : 'INTEGER' | 'REAL' | 'CHARACTER' charlength ; //falta añadir lo que en el enunciado viene como typevar
+tipo returns [String type]
+: 'INTEGER' {$type = "INTEGER";}
+| 'REAL' {$type = "REAL";}
+| 'CHARACTER' charlength {$type = "CHARACTER" + $charlength.text;} ;
 charlength : '(' NUM_INT_CONST ')' | ;
 //Original: varlist: IDENT init | IDENT init ',' varlist;
 //Cambiado para ser LL(1), ya que dos producciones de una misma regla no pueden tener el mismo director
@@ -47,16 +53,27 @@ init : '='  simpvalue | ;
 ///////////////////Procedimientos y Funciones
 /////////////////////////////////////////////
 
-decproc : 'SUBROUTINE' IDENT formal_paramlist dec_s_paramlist 'END' 'SUBROUTINE' IDENT ;
+decproc : {Cabecera cab = new Cabecera();} 'SUBROUTINE' {cab.setName(getCurrentToken().getText());} IDENT
+ formal_paramlist dec_s_paramlist 'END' 'SUBROUTINE' {cab.checkName(getCurrentToken().getText());} IDENT
+  {cab.setVars(subroutineVars); cabeceras.add(cab);};
+
 formal_paramlist : | '(' nomparamlist ')';
 //Original: nomparamlist : IDENT | IDENT ',' nomparamlist;
 //Cambiado para ser LL(1), ya que dos producciones de una misma regla no pueden tener el mismo director
 nomparamlist : IDENT nomparamlist2;
 nomparamlist2 : | ',' nomparamlist;
-dec_s_paramlist : tipo ',' 'INTENT' '(' tipoparam ')' IDENT ';' dec_s_paramlist | ;
+
+dec_s_paramlist : {Variable var = new Variable(); var.setType(getCurrentToken().getText());} tipo ',' 'INTENT'
+ '(' {var.modType(getCurrentToken().getText());} tipoparam ')' {var.setName(getCurrentToken().getText());} IDENT
+  ';' {subroutineVars.add(var);} dec_s_paramlist | ;
 tipoparam : 'IN' | 'OUT' | 'INOUT' ;
-decfun : 'FUNCTION' IDENT '(' nomparamlist ')' tipo '::' IDENT ';' dec_f_paramlist 'END' 'FUNCTION' IDENT ;
-dec_f_paramlist :  tipo ',' 'INTENT' '(' 'IN' ')' IDENT ';' dec_f_paramlist | ;
+
+decfun : {Cabecera cab = new Cabecera();} 'FUNCTION' {cab.setName(getCurrentToken().getText());} IDENT
+ '(' nomparamlist ')' {cab.setReturnType(getCurrentToken().getText());} tipo '::' {cab.checkName(getCurrentToken().getText());}
+  IDENT ';' {cabeceras.add(cab);} dec_f_paramlist 'END' 'FUNCTION'  IDENT;
+dec_f_paramlist : {Variable var = new Variable();} tipo {var.setType($tipo.type);}
+ ',' 'INTENT' '(' 'IN' ')' {var.setName(getCurrentToken().getText());} IDENT ';'
+  {cabeceras.get(cabeceras.size()-1).getVars().add(var);} dec_f_paramlist | ;
 
 /////////////////////////////////////////////
 ////////////////Sentencias Programa Principal
@@ -96,16 +113,17 @@ opcomp : '<' | '>' | '<=' | '>=' | '==' | '/=' ;
 factor : simpvalue | '(' exp ')' | IDENT factor2;
 factor2 : | '(' exp explist ')';
 explist : ',' exp explist | ;
-proc_call : 'CALL' IDENT subpparamlist ;
 
 /////////////////////////////////////////////
 ////Implementacion Funciones y Procedimientos
 /////////////////////////////////////////////
 
+proc_call : 'CALL' IDENT subpparamlist ;
 subpparamlist : '(' exp explist ')' | ;
 subproglist : codproc subproglist | codfun subproglist | ;
 codproc : 'SUBROUTINE' IDENT formal_paramlist dec_s_paramlist dcllist sent sentlist 'END' 'SUBROUTINE' IDENT ;
-codfun : 'FUNCTION' IDENT '(' nomparamlist ')' tipo '::' IDENT ';'dec_f_paramlist dcllist sent sentlist IDENT '=' exp ';' 'END' 'FUNCTION' IDENT ;
+codfun : 'FUNCTION' IDENT '(' nomparamlist ')' tipo '::' IDENT ';'dec_f_paramlist
+ dcllist sent sentlist IDENT '=' exp ';' 'END' 'FUNCTION' IDENT ;
 
 /////////////////////////////////////////////
 /////////////////////////////Constantes y mas
