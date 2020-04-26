@@ -483,6 +483,30 @@ public class FortranToCBaseListener implements FortranToCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterExp1(FortranToCParser.Exp1Context ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExp1(FortranToCParser.Exp1Context ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterExp2(FortranToCParser.Exp2Context ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExp2(FortranToCParser.Exp2Context ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterExpAux(FortranToCParser.ExpAuxContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -490,6 +514,18 @@ public class FortranToCBaseListener implements FortranToCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitExpAux(FortranToCParser.ExpAuxContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterExpAux2(FortranToCParser.ExpAux2Context ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExpAux2(FortranToCParser.ExpAux2Context ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -531,6 +567,18 @@ public class FortranToCBaseListener implements FortranToCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterExpcondAux(FortranToCParser.ExpcondAuxContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExpcondAux(FortranToCParser.ExpcondAuxContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterOplog(FortranToCParser.OplogContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -550,6 +598,18 @@ public class FortranToCBaseListener implements FortranToCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitFactorcond(FortranToCParser.FactorcondContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterFactorcond2(FortranToCParser.Factorcond2Context ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFactorcond2(FortranToCParser.Factorcond2Context ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -598,6 +658,18 @@ public class FortranToCBaseListener implements FortranToCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitExplist(FortranToCParser.ExplistContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterExplist2(FortranToCParser.Explist2Context ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExplist2(FortranToCParser.Explist2Context ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

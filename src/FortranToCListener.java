@@ -397,6 +397,26 @@ public interface FortranToCListener extends ParseTreeListener {
 	 */
 	void exitExp(FortranToCParser.ExpContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link FortranToCParser#exp1}.
+	 * @param ctx the parse tree
+	 */
+	void enterExp1(FortranToCParser.Exp1Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link FortranToCParser#exp1}.
+	 * @param ctx the parse tree
+	 */
+	void exitExp1(FortranToCParser.Exp1Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link FortranToCParser#exp2}.
+	 * @param ctx the parse tree
+	 */
+	void enterExp2(FortranToCParser.Exp2Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link FortranToCParser#exp2}.
+	 * @param ctx the parse tree
+	 */
+	void exitExp2(FortranToCParser.Exp2Context ctx);
+	/**
 	 * Enter a parse tree produced by {@link FortranToCParser#expAux}.
 	 * @param ctx the parse tree
 	 */
@@ -406,6 +426,16 @@ public interface FortranToCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExpAux(FortranToCParser.ExpAuxContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FortranToCParser#expAux2}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpAux2(FortranToCParser.ExpAux2Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link FortranToCParser#expAux2}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpAux2(FortranToCParser.ExpAux2Context ctx);
 	/**
 	 * Enter a parse tree produced by {@link FortranToCParser#op}.
 	 * @param ctx the parse tree
@@ -437,6 +467,16 @@ public interface FortranToCListener extends ParseTreeListener {
 	 */
 	void exitExpcond(FortranToCParser.ExpcondContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link FortranToCParser#expcondAux}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpcondAux(FortranToCParser.ExpcondAuxContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link FortranToCParser#expcondAux}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpcondAux(FortranToCParser.ExpcondAuxContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link FortranToCParser#oplog}.
 	 * @param ctx the parse tree
 	 */
@@ -456,6 +496,16 @@ public interface FortranToCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFactorcond(FortranToCParser.FactorcondContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FortranToCParser#factorcond2}.
+	 * @param ctx the parse tree
+	 */
+	void enterFactorcond2(FortranToCParser.Factorcond2Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link FortranToCParser#factorcond2}.
+	 * @param ctx the parse tree
+	 */
+	void exitFactorcond2(FortranToCParser.Factorcond2Context ctx);
 	/**
 	 * Enter a parse tree produced by {@link FortranToCParser#opcomp}.
 	 * @param ctx the parse tree
@@ -496,6 +546,16 @@ public interface FortranToCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExplist(FortranToCParser.ExplistContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link FortranToCParser#explist2}.
+	 * @param ctx the parse tree
+	 */
+	void enterExplist2(FortranToCParser.Explist2Context ctx);
+	/**
+	 * Exit a parse tree produced by {@link FortranToCParser#explist2}.
+	 * @param ctx the parse tree
+	 */
+	void exitExplist2(FortranToCParser.Explist2Context ctx);
 	/**
 	 * Enter a parse tree produced by {@link FortranToCParser#proc_call}.
 	 * @param ctx the parse tree

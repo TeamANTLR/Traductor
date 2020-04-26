@@ -37,7 +37,13 @@ defcte : {Constante cte = new Constante();} tipo ',' 'PARAMETER' '::' {cte.setNa
 defvar : tipo '::' varlist ';' defvar | ;
 ctelist : {Constante cte = new Constante();} ',' {cte.setName(getCurrentToken().getText());} IDENT '=' {cte.setValue(getCurrentToken().getText());} simpvalue {constantes.add(cte);} ctelist | ;
 //anadida parte opcional
-simpvalue : NUM_INT_CONST | NUM_REAL_CONST | STRING_CONST | NUM_INT_CONST_B | NUM_INT_CONST_O | NUM_INT_CONST_H;
+simpvalue returns [String simpvalueReturn]
+: NUM_INT_CONST {$simpvalueReturn = "1";}
+| NUM_REAL_CONST {$simpvalueReturn = "1";}
+| STRING_CONST {$simpvalueReturn = "1";}
+| NUM_INT_CONST_B {$simpvalueReturn = "1";}
+| NUM_INT_CONST_O {$simpvalueReturn = "1";}
+| NUM_INT_CONST_H {$simpvalueReturn = "1";};
 tipo returns [String type]
 : 'INTEGER' {$type = "INTEGER";}
 | 'REAL' {$type = "REAL";}
@@ -82,7 +88,7 @@ dec_f_paramlist : {Variable var = new Variable();} tipo {var.setType($tipo.type)
 //anadida parte opcional
 //Cambiado para ser LL(1), ya que dos producciones de una misma regla no pueden tener el mismo director
 sent : IDENT '=' exp ';'| proc_call ';'
-    | 'IF' '(' expcond ')' sent2
+    | 'IF' '(' expcond {System.out.println($expcond.expcondReturn);} ')' sent2
     | 'DO' sent4
     | 'SELECT' 'CASE' '(' exp ')' casos 'END' 'SELECT' ;
 sent2 : sent | 'THEN' sentlist sent3 ;
@@ -99,20 +105,80 @@ etiquetas3 : simpvalue | ;
 listaetiquetas : ',' simpvalue | ;
 //Original: exp: exp op exp| factor;
 //Cambiado para que no sea recursiva por la izqda y lograr LL(1)
-exp : factor expAux ;
-expAux : op exp expAux | ;
-op : oparit;
-oparit : '+' | '-' | '*' | '/' ;
-//anadida parte opcional
-expcond : expcond oplog expcond | factorcond ;
-oplog : '.OR.' | '.AND.' | '.EQV.' | '.NEQV.' ;
-factorcond : exp opcomp exp | '(' expcond ')' | '.NOT.' factorcond | '.TRUE.' | '.FALSE.' ;
-opcomp : '<' | '>' | '<=' | '>=' | '==' | '/=' ;
+exp returns [String expReturn]
+: factor expAux {$expReturn = $factor.factorReturn + $expAux.expAuxReturn;};
+
+exp1 returns [String exp1Return]
+: factor expAux {$exp1Return = $factor.factorReturn + $expAux.expAuxReturn;};
+exp2 returns [String exp2Return]
+: factor expAux {$exp2Return = $factor.factorReturn + $expAux.expAuxReturn;};
+
+expAux returns [String expAuxReturn]
+: op exp expAux2 {$expAuxReturn = $op.opReturn + $exp.expReturn + $expAux2.expAux2Return;}
+| {$expAuxReturn = "";};
+
+expAux2 returns [String expAux2Return]
+: op exp expAux {$expAux2Return = $op.opReturn + $exp.expReturn + $expAux.expAuxReturn;}
+| {$expAux2Return = "";};
+
+op returns [String opReturn]
+: oparit {$opReturn = $oparit.oparitReturn;};
+oparit returns [String oparitReturn]
+: '+' {$oparitReturn = "+";}
+| '-' {$oparitReturn = "-";}
+| '*' {$oparitReturn = "*";}
+| '/' {$oparitReturn = "/";};
+//anadida parte opcional y eliminada recursividad por la izquierda
+expcond returns [String expcondReturn]
+: factorcond expcondAux {$expcondReturn = $factorcond.factorcondReturn + $expcondAux.expcondAuxReturn;};
+expcondAux returns [String expcondAuxReturn]
+: oplog expcond {$expcondAuxReturn= $oplog.oplogReturn+ $expcond.expcondReturn;}
+| {$expcondAuxReturn = "";};
+
+oplog returns [String oplogReturn]
+: '.OR.' {$oplogReturn = "||";}
+| '.AND.' {$oplogReturn = "&&";}
+| '.EQV.' {$oplogReturn = "!^";}
+| '.NEQV.' {$oplogReturn = "^";};
+
+factorcond returns [String factorcondReturn]
+: exp1 opcomp exp2 {$factorcondReturn = $exp1.exp1Return + $opcomp.opcompReturn + $exp2.exp2Return;}
+| '(' expcond ')' {$factorcondReturn = "(" + $expcond.expcondReturn + ")";}
+| '.NOT.' factorcond2 {$factorcondReturn = "!" + $factorcond2.factorcond2Return;}
+| '.TRUE.' {$factorcondReturn = "true";}
+| '.FALSE.' {$factorcondReturn = "false";};
+
+factorcond2 returns [String factorcond2Return]
+: exp1 opcomp exp2 {$factorcond2Return = $exp1.exp1Return + $opcomp.opcompReturn + $exp2.exp2Return;}
+| '(' expcond ')' {$factorcond2Return = "(" + $expcond.expcondReturn + ")";}
+| '.NOT.' factorcond {$factorcond2Return = ".NOT." + $factorcond.factorcondReturn;}
+| '.TRUE.' {$factorcond2Return = ".TRUE.";}
+| '.FALSE.' {$factorcond2Return = ".FALSE.";};
+
+opcomp returns [String opcompReturn]
+: '<' {$opcompReturn = "<";}
+| '>' {$opcompReturn = ">";}
+| '<=' {$opcompReturn = "<=";}
+| '>=' {$opcompReturn = ">=";}
+| '==' {$opcompReturn = "==";}
+| '/=' {$opcompReturn = "!=";};
 //Original: factor :simpvalue | '(' exp ')' | IDENT '(' exp explist ')' | IDENT;
 //Cambiado para ser LL(1), ya que dos producciones de una misma regla no pueden tener el mismo director
-factor : simpvalue | '(' exp ')' | IDENT factor2;
-factor2 : | '(' exp explist ')';
-explist : ',' exp explist | ;
+factor returns [String factorReturn]
+: simpvalue {$factorReturn = $simpvalue.simpvalueReturn;}
+| '(' exp ')' {$factorReturn = "(" + $exp.expReturn + ")";}
+| IDENT factor2 {$factorReturn = $IDENT.text + $factor2.factor2Return;};
+factor2 returns [String factor2Return]
+: {$factor2Return = "";}|
+ '(' exp explist ')' {$factor2Return = "(" + $exp.expReturn + $explist.explistReturn + ")";};
+explist returns [String explistReturn]
+: ',' exp explist2 {$explistReturn = "," + $exp.expReturn + $explist2.explist2Return;}
+| {$explistReturn = "";};
+
+explist2 returns [String explist2Return]
+: ',' exp explist {$explist2Return = "," + $exp.expReturn + $explist.explistReturn;}
+| {$explist2Return = "";};
+
 
 /////////////////////////////////////////////
 ////Implementacion Funciones y Procedimientos
