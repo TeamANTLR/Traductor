@@ -1,17 +1,16 @@
 package model;
 
 public class Constante {
-    public String constante = "";
+    private String name;
+    private String value;
 
-    public Constante() {
-    }   
-
-    public void setName(String name) {
-        this.constante += "#define " + name + " ";
+    public Constante(String name, String value) {
+        this.name = name;
+        this.value = value;
     }
-    
-    public void setValue(String value) {
-        this.constante += value + ";";
+
+    public void printConstante () {
+        System.out.println("#define " + this.name + " " + this.value + ";");
     }
     
     

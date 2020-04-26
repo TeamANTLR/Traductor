@@ -3,15 +3,15 @@ grammar FortranToC;
 @parser::members {
 	ArrayList<Constante> constantes = new ArrayList<>();
 	ArrayList<Cabecera> cabeceras = new ArrayList<>();
-	ArrayList<Variable> subroutineVars = new ArrayList<>();
+	ArrayList<Variable> functionVarList = new ArrayList<>();
 }
 
 /////////////////////////////////////////////
 /////////////////////////////////Primera Zona
 /////////////////////////////////////////////
 
-prg : prgmal | 'PROGRAM' IDENT ';' dcllist {constantes.forEach(cte -> {System.out.println(cte.constante);});}
-cabecera {cabeceras.forEach(cab -> {cab.printCabecera();});} sent sentlist 'END' 'PROGRAM' IDENT subproglist;
+prg : prgmal | 'PROGRAM' {System.out.println("\n");} IDENT ';' dcllist {constantes.forEach(cte -> {cte.printConstante();}); System.out.println("\n");}
+cabecera {cabeceras.forEach(cab -> {cab.printCabecera();}); System.out.println("\n");} sent sentlist 'END' 'PROGRAM' IDENT subproglist;
 //Un ejemplo de error controlado desde la especificación léxica
 prgmal : 'program' IDENT ';' dcllist cabecera sent sentlist 'END' 'program' IDENT subproglist{System.err.println("PROGRAM debe ir con mayusculas");};
 //Original: dcllist : | dcllist dcl;
@@ -32,22 +32,22 @@ sentlist: sent sentlist | ;
 //Cambiado para evitar que se acepte cadena vacia, se fuerza a que al menos reconozca una vez,
 //o bien defcte, o bien defvar
 dcl : tipo dcl2;
-dcl2 : {Constante cte = new Constante();} ',' 'PARAMETER' '::' {cte.setName(getCurrentToken().getText());} IDENT '=' {cte.setValue(getCurrentToken().getText());} simpvalue {constantes.add(cte);} ctelist ';' defcte | '::' varlist ';' defvar ;
-defcte : {Constante cte = new Constante();} tipo ',' 'PARAMETER' '::' {cte.setName(getCurrentToken().getText());} IDENT '=' {cte.setValue(getCurrentToken().getText());} simpvalue {constantes.add(cte);} ctelist ';' defcte | ;
+dcl2 : ',' 'PARAMETER' '::' IDENT '=' simpvalue {constantes.add(new Constante($IDENT.text, $simpvalue.simpvalueValue));} ctelist ';' defcte | '::' varlist ';' defvar ;
+defcte : tipo ',' 'PARAMETER' '::' IDENT '=' simpvalue {constantes.add(new Constante($IDENT.text, $simpvalue.simpvalueValue));} ctelist ';' defcte | ;
 defvar : tipo '::' varlist ';' defvar | ;
-ctelist : {Constante cte = new Constante();} ',' {cte.setName(getCurrentToken().getText());} IDENT '=' {cte.setValue(getCurrentToken().getText());} simpvalue {constantes.add(cte);} ctelist | ;
+ctelist : ',' IDENT '=' simpvalue {constantes.add(new Constante($IDENT.text, $simpvalue.simpvalueValue));} ctelist | ;
 //anadida parte opcional
-simpvalue returns [String simpvalueReturn]
-: NUM_INT_CONST {$simpvalueReturn = "1";}
-| NUM_REAL_CONST {$simpvalueReturn = "1";}
-| STRING_CONST {$simpvalueReturn = "1";}
-| NUM_INT_CONST_B {$simpvalueReturn = "1";}
-| NUM_INT_CONST_O {$simpvalueReturn = "1";}
-| NUM_INT_CONST_H {$simpvalueReturn = "1";};
-tipo returns [String type]
-: 'INTEGER' {$type = "INTEGER";}
-| 'REAL' {$type = "REAL";}
-| 'CHARACTER' charlength {$type = "CHARACTER" + $charlength.text;} ;
+simpvalue returns [String simpvalueValue]
+: NUM_INT_CONST {$simpvalueValue = $NUM_INT_CONST.text;}
+| NUM_REAL_CONST {$simpvalueValue = $NUM_REAL_CONST.text;}
+| STRING_CONST {$simpvalueValue = $STRING_CONST.text;}
+| NUM_INT_CONST_B {$simpvalueValue = $NUM_INT_CONST_B.text;}
+| NUM_INT_CONST_O {$simpvalueValue = $NUM_INT_CONST_O.text;}
+| NUM_INT_CONST_H {$simpvalueValue = $NUM_INT_CONST_H.text;};
+tipo returns [String tipoValue]
+: 'INTEGER' {$tipoValue = "int";}
+| 'REAL' {$tipoValue = "float";}
+| 'CHARACTER' charlength {$tipoValue = "char" + $charlength.text;} ;
 charlength : '(' NUM_INT_CONST ')' | ;
 //Original: varlist: IDENT init | IDENT init ',' varlist;
 //Cambiado para ser LL(1), ya que dos producciones de una misma regla no pueden tener el mismo director
@@ -59,9 +59,10 @@ init : '='  simpvalue | ;
 ///////////////////Procedimientos y Funciones
 /////////////////////////////////////////////
 
-decproc : {Cabecera cab = new Cabecera();} 'SUBROUTINE' {cab.setName(getCurrentToken().getText());} IDENT
- formal_paramlist dec_s_paramlist 'END' 'SUBROUTINE' {cab.checkName(getCurrentToken().getText());} IDENT
-  {cab.setVars(subroutineVars); cabeceras.add(cab);};
+decproc : 'SUBROUTINE' IDENT {String name = $IDENT.text;}
+ formal_paramlist dec_s_paramlist 'END' 'SUBROUTINE' IDENT
+  {Cabecera cab = new Cabecera(name, $IDENT.text, "void"); cab.setVars(functionVarList);
+  functionVarList = new ArrayList<>(); cabeceras.add(cab);};
 
 formal_paramlist : | '(' nomparamlist ')';
 //Original: nomparamlist : IDENT | IDENT ',' nomparamlist;
@@ -69,17 +70,19 @@ formal_paramlist : | '(' nomparamlist ')';
 nomparamlist : IDENT nomparamlist2;
 nomparamlist2 : | ',' nomparamlist;
 
-dec_s_paramlist : {Variable var = new Variable(); var.setType(getCurrentToken().getText());} tipo ',' 'INTENT'
- '(' {var.modType(getCurrentToken().getText());} tipoparam ')' {var.setName(getCurrentToken().getText());} IDENT
-  ';' {subroutineVars.add(var);} dec_s_paramlist | ;
-tipoparam : 'IN' | 'OUT' | 'INOUT' ;
+dec_s_paramlist : tipo ',' 'INTENT' '(' tipoparam ')' IDENT ';'
+ {functionVarList.add(new Variable($IDENT.text, $tipo.tipoValue, $tipoparam.tipoparamValue));} dec_s_paramlist | ;
+tipoparam returns [String tipoparamValue]
+: 'IN' {$tipoparamValue = "IN";}
+| 'OUT' {$tipoparamValue = "OUT";}
+| 'INOUT' {$tipoparamValue = "INOUT";};
 
-decfun : {Cabecera cab = new Cabecera();} 'FUNCTION' {cab.setName(getCurrentToken().getText());} IDENT
- '(' nomparamlist ')' {cab.setReturnType(getCurrentToken().getText());} tipo '::' {cab.checkName(getCurrentToken().getText());}
-  IDENT ';' {cabeceras.add(cab);} dec_f_paramlist 'END' 'FUNCTION'  IDENT;
-dec_f_paramlist : {Variable var = new Variable();} tipo {var.setType($tipo.type);}
- ',' 'INTENT' '(' 'IN' ')' {var.setName(getCurrentToken().getText());} IDENT ';'
-  {cabeceras.get(cabeceras.size()-1).getVars().add(var);} dec_f_paramlist | ;
+decfun : 'FUNCTION' IDENT {String name = $IDENT.text;} '(' nomparamlist ')' tipo '::' IDENT ';' dec_f_paramlist
+ {Cabecera cab = new Cabecera(name, $IDENT.text, $tipo.tipoValue); cab.setVars(functionVarList);
+ functionVarList = new ArrayList<>(); cabeceras.add(cab);} 'END' 'FUNCTION' IDENT ;
+
+dec_f_paramlist : tipo ',' 'INTENT' '(' 'IN' ')' IDENT ';'
+ {functionVarList.add(new Variable($IDENT.text, $tipo.tipoValue, "IN"));} dec_f_paramlist | ;
 
 /////////////////////////////////////////////
 ////////////////Sentencias Programa Principal
@@ -88,7 +91,7 @@ dec_f_paramlist : {Variable var = new Variable();} tipo {var.setType($tipo.type)
 //anadida parte opcional
 //Cambiado para ser LL(1), ya que dos producciones de una misma regla no pueden tener el mismo director
 sent : IDENT '=' exp ';'| proc_call ';'
-    | 'IF' '(' expcond {System.out.println($expcond.expcondReturn);} ')' sent2
+    | 'IF' '(' expcond {System.out.println("if ( " + $expcond.expcondValue + " ) {");} ')' sent2
     | 'DO' sent4
     | 'SELECT' 'CASE' '(' exp ')' casos 'END' 'SELECT' ;
 sent2 : sent | 'THEN' sentlist sent3 ;
@@ -105,79 +108,79 @@ etiquetas3 : simpvalue | ;
 listaetiquetas : ',' simpvalue | ;
 //Original: exp: exp op exp| factor;
 //Cambiado para que no sea recursiva por la izqda y lograr LL(1)
-exp returns [String expReturn]
-: factor expAux {$expReturn = $factor.factorReturn + $expAux.expAuxReturn;};
+exp returns [String expValue]
+: factor expAux {$expValue = $factor.factorValue + $expAux.expAuxValue;};
 
-exp1 returns [String exp1Return]
-: factor expAux {$exp1Return = $factor.factorReturn + $expAux.expAuxReturn;};
-exp2 returns [String exp2Return]
-: factor expAux {$exp2Return = $factor.factorReturn + $expAux.expAuxReturn;};
+exp1 returns [String exp1Value]
+: factor expAux {$exp1Value = $factor.factorValue + $expAux.expAuxValue;};
+exp2 returns [String exp2Value]
+: factor expAux {$exp2Value = $factor.factorValue + $expAux.expAuxValue;};
 
-expAux returns [String expAuxReturn]
-: op exp expAux2 {$expAuxReturn = $op.opReturn + $exp.expReturn + $expAux2.expAux2Return;}
-| {$expAuxReturn = "";};
+expAux returns [String expAuxValue]
+: op exp expAux2 {$expAuxValue = $op.opValue + $exp.expValue + $expAux2.expAux2Value;}
+| {$expAuxValue = "";};
 
-expAux2 returns [String expAux2Return]
-: op exp expAux {$expAux2Return = $op.opReturn + $exp.expReturn + $expAux.expAuxReturn;}
-| {$expAux2Return = "";};
+expAux2 returns [String expAux2Value]
+: op exp expAux {$expAux2Value = $op.opValue + $exp.expValue + $expAux.expAuxValue;}
+| {$expAux2Value = "";};
 
-op returns [String opReturn]
-: oparit {$opReturn = $oparit.oparitReturn;};
-oparit returns [String oparitReturn]
-: '+' {$oparitReturn = "+";}
-| '-' {$oparitReturn = "-";}
-| '*' {$oparitReturn = "*";}
-| '/' {$oparitReturn = "/";};
+op returns [String opValue]
+: oparit {$opValue = $oparit.oparitValue;};
+oparit returns [String oparitValue]
+: '+' {$oparitValue = " + ";}
+| '-' {$oparitValue = " - ";}
+| '*' {$oparitValue = " * ";}
+| '/' {$oparitValue = " / ";};
 //anadida parte opcional y eliminada recursividad por la izquierda
-expcond returns [String expcondReturn]
-: factorcond expcondAux {$expcondReturn = $factorcond.factorcondReturn + $expcondAux.expcondAuxReturn;};
-expcondAux returns [String expcondAuxReturn]
-: oplog expcond {$expcondAuxReturn= $oplog.oplogReturn+ $expcond.expcondReturn;}
-| {$expcondAuxReturn = "";};
+expcond returns [String expcondValue]
+: factorcond expcondAux {$expcondValue = $factorcond.factorcondValue + $expcondAux.expcondAuxValue;};
+expcondAux returns [String expcondAuxValue]
+: oplog expcond {$expcondAuxValue= $oplog.oplogValue + $expcond.expcondValue;}
+| {$expcondAuxValue = "";};
 
-oplog returns [String oplogReturn]
-: '.OR.' {$oplogReturn = "||";}
-| '.AND.' {$oplogReturn = "&&";}
-| '.EQV.' {$oplogReturn = "!^";}
-| '.NEQV.' {$oplogReturn = "^";};
+oplog returns [String oplogValue]
+: '.OR.' {$oplogValue = " || ";}
+| '.AND.' {$oplogValue = " && ";}
+| '.EQV.' {$oplogValue = " !^ ";}
+| '.NEQV.' {$oplogValue = " ^ ";};
 
-factorcond returns [String factorcondReturn]
-: exp1 opcomp exp2 {$factorcondReturn = $exp1.exp1Return + $opcomp.opcompReturn + $exp2.exp2Return;}
-| '(' expcond ')' {$factorcondReturn = "(" + $expcond.expcondReturn + ")";}
-| '.NOT.' factorcond2 {$factorcondReturn = "!" + $factorcond2.factorcond2Return;}
-| '.TRUE.' {$factorcondReturn = "true";}
-| '.FALSE.' {$factorcondReturn = "false";};
+factorcond returns [String factorcondValue]
+: exp1 opcomp exp2 {$factorcondValue = $exp1.exp1Value + $opcomp.opcompValue + $exp2.exp2Value;}
+| '(' expcond ')' {$factorcondValue = "(" + $expcond.expcondValue + ")";}
+| '.NOT.' factorcond2 {$factorcondValue = "!" + $factorcond2.factorcond2Value;}
+| '.TRUE.' {$factorcondValue = "true";}
+| '.FALSE.' {$factorcondValue = "false";};
 
-factorcond2 returns [String factorcond2Return]
-: exp1 opcomp exp2 {$factorcond2Return = $exp1.exp1Return + $opcomp.opcompReturn + $exp2.exp2Return;}
-| '(' expcond ')' {$factorcond2Return = "(" + $expcond.expcondReturn + ")";}
-| '.NOT.' factorcond {$factorcond2Return = ".NOT." + $factorcond.factorcondReturn;}
-| '.TRUE.' {$factorcond2Return = ".TRUE.";}
-| '.FALSE.' {$factorcond2Return = ".FALSE.";};
+factorcond2 returns [String factorcond2Value]
+: exp1 opcomp exp2 {$factorcond2Value = $exp1.exp1Value+ $opcomp.opcompValue + $exp2.exp2Value;}
+| '(' expcond ')' {$factorcond2Value = "(" + $expcond.expcondValue + ")";}
+| '.NOT.' factorcond {$factorcond2Value = ".NOT." + $factorcond.factorcondValue;}
+| '.TRUE.' {$factorcond2Value = ".TRUE.";}
+| '.FALSE.' {$factorcond2Value = ".FALSE.";};
 
-opcomp returns [String opcompReturn]
-: '<' {$opcompReturn = "<";}
-| '>' {$opcompReturn = ">";}
-| '<=' {$opcompReturn = "<=";}
-| '>=' {$opcompReturn = ">=";}
-| '==' {$opcompReturn = "==";}
-| '/=' {$opcompReturn = "!=";};
+opcomp returns [String opcompValue]
+: '<' {$opcompValue = " < ";}
+| '>' {$opcompValue = " > ";}
+| '<=' {$opcompValue = " <= ";}
+| '>=' {$opcompValue = " >= ";}
+| '==' {$opcompValue = " == ";}
+| '/=' {$opcompValue = " != ";};
 //Original: factor :simpvalue | '(' exp ')' | IDENT '(' exp explist ')' | IDENT;
 //Cambiado para ser LL(1), ya que dos producciones de una misma regla no pueden tener el mismo director
-factor returns [String factorReturn]
-: simpvalue {$factorReturn = $simpvalue.simpvalueReturn;}
-| '(' exp ')' {$factorReturn = "(" + $exp.expReturn + ")";}
-| IDENT factor2 {$factorReturn = $IDENT.text + $factor2.factor2Return;};
-factor2 returns [String factor2Return]
-: {$factor2Return = "";}|
- '(' exp explist ')' {$factor2Return = "(" + $exp.expReturn + $explist.explistReturn + ")";};
-explist returns [String explistReturn]
-: ',' exp explist2 {$explistReturn = "," + $exp.expReturn + $explist2.explist2Return;}
-| {$explistReturn = "";};
+factor returns [String factorValue]
+: simpvalue {$factorValue = $simpvalue.simpvalueValue;}
+| '(' exp ')' {$factorValue = "(" + $exp.expValue + ")";}
+| IDENT factor2 {$factorValue = $IDENT.text + $factor2.factor2Value;};
+factor2 returns [String factor2Value]
+: {$factor2Value = "";}|
+ '(' exp explist ')' {$factor2Value = "(" + $exp.expValue + $explist.explistValue + ")";};
+explist returns [String explistValue]
+: ',' exp explist2 {$explistValue = "," + $exp.expValue + $explist2.explist2Value;}
+| {$explistValue = "";};
 
-explist2 returns [String explist2Return]
-: ',' exp explist {$explist2Return = "," + $exp.expReturn + $explist.explistReturn;}
-| {$explist2Return = "";};
+explist2 returns [String explist2Value]
+: ',' exp explist {$explist2Value = "," + $exp.expValue + $explist.explistValue;}
+| {$explist2Value = "";};
 
 
 /////////////////////////////////////////////

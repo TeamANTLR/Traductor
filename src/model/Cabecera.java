@@ -8,26 +8,11 @@ public class Cabecera {
     private ArrayList<Variable> vars;
     private boolean ok = false; //Si coinciden el nombre de la función en la apertura y cierre
 
-    public Cabecera(){
+    public Cabecera(String name, String nameToCheck, String returnType){
         this.vars = new ArrayList<>();
-        this.returnType = "void";
-    }
-
-    public void checkName(String str){
-        ok = str.equals(name);
-    }
-
-    public void setReturnType(String returnType) throws RuntimeException{
-        switch (returnType) {
-            case "INTEGER": {this.returnType = "int"; break;}
-            case "REAL": {this.returnType = "float"; break;}
-            case "CHARACTER": {this.returnType = "char"; break;}
-            default: throw new RuntimeException("El tipo devuelto no esta contemplado");
-        }
-    }
-
-    public void setName(String name) {
         this.name = name;
+        this.ok = nameToCheck.equals(this.name);
+        this.returnType = returnType;
     }
 
     public void setVars(ArrayList<Variable> vars) {

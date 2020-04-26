@@ -1,48 +1,21 @@
 package model;
 
 public class Variable {
-    private String name = "";
+    private String name;
     private String type;
     private String size = "";
 
-    public Variable(){
-    }
+    public Variable(String name, String type, String inOut){
+        if (inOut.equals("INOUT") || inOut.equals("OUT"))
+            this.name = "*" + name;
+        else
+            this.name = name;
 
-    public void setName(String name) {
-        this.name += name;
-    }
-
-    public void setType(String type) throws RuntimeException{
-        switch (type) {
-            case "INTEGER": {
-                this.type = "int";
-                break;
-            }
-            case "REAL": {
-                this.type = "float";
-                break;
-            }
-            case "CHARACTER": {
-                this.type = "char";
-                break;
-            }
-            default: {
-                if (type.contains("CHARACTER")) {
-                    this.type = "char";
-                    this.size = "[]";
-                }
-                else
-                    throw new RuntimeException("El tipo devuelto no esta contemplado");
-            }
-        }
-    }
-
-    public void modType (String str) {
-        if (str.equals("INOUT") || str.equals("OUT"))
-            this.name = "*";
-    }
-    public void modSize(){
-        this.name += "[]";
+        if (type.contains("(")) {
+            this.name += "[]";
+            this.type = "char";
+        } else
+            this.type = type;
     }
 
     @Override
