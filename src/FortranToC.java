@@ -21,5 +21,8 @@ public class FortranToC {
         parser.removeErrorListeners(); // remove ConsoleErrorListener
         parser.addErrorListener(new NewListener()); // add ours
         parser.prg(); // parse as usual
+
+        //crear una clase raiz programa con constantes, cabeceras y bloques del main
+        //pasarsela al Parser y y mostrarla con una llamada desde el main
     }
 }

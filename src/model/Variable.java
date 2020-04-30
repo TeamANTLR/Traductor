@@ -5,13 +5,9 @@ public class Variable {
     private String type;
     private String size = "";
 
-    public Variable(String name, String type, String inOut){
-        if (inOut.equals("INOUT") || inOut.equals("OUT"))
-            this.name = "*" + name;
-        else
-            this.name = name;
-
-        if (type.contains("(")) {
+    public Variable(String name, String type, String size){
+        this.name = name;
+        if (!size.isEmpty()) {
             this.name += "[]";
             this.type = "char";
         } else

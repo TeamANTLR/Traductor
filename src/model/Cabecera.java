@@ -26,15 +26,15 @@ public class Cabecera {
     public void printCabecera() throws RuntimeException{
         if (!ok)
             throw new RuntimeException("Los nombres de las cabeceras no coinciden");
-        System.out.print(returnType +' '+name+" ( ");
+        System.out.print(returnType +' '+name+" (");
         int size = vars.size();
         if (size==0)
-            System.out.print("void ");
+            System.out.print("void");
         else {
             for(int i=0;i<size;i++) {
-                System.out.print(vars.get(i).toString() + ' ');
+                System.out.print(vars.get(i).toString());
                 if (i < (size-1))
-                    System.out.print(", ");
+                    System.out.print(" , ");
             }
         }
         System.out.println(");");
